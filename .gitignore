@@ -41,14 +41,14 @@ coverage.xml
 .mr.developer.cfg
 .project
 .pydevproject
-settings.py
+
 # Rope
 .ropeproject
 
 # Django stuff:
 *.log
 *.pot
-
+settings.py
 # Sphinx documentation
 docs/_build/
 
