@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>AnimeList</title>
+    </head>
+
+    <body>
+    {% for anime in anime_list %}
+    <div>{{anime}}-
+    {% for category in anime.category.all  %}
+    {{category.name}}
+    {% if not forloop.last %}, {% endif %}
+	{% endfor %}
+	<a href="/list/add/{{anime.id}}">Add</a></div>
+    {% endfor %}
+    </body>
+    </html>
