@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from gmail.models import CredentialsModel
 from new_site import settings
 from oauth2client import xsrfutil
@@ -18,10 +18,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.django_orm import Storage
 from django.core.exceptions import ObjectDoesNotExist
 
-# CLIENT_SECRETS, name of a file containing the OAuth 2.0 information for this
-# application, including client_id and client_secret, which are found
-# on the API Access tab on the Google APIs
-# Console <http://code.google.com/apis/console>
+
 CLIENT_SECRETS = os.path.join(
     os.path.dirname(__file__), '..', 'client_secrets.json')
 
@@ -38,13 +35,51 @@ def index(request):
     http = httplib2.Http()
     http = credential.authorize(http)
     gmail_service = build("gmail", "v1", http=http)
+    messages = gmail_service.users().threads().list(userId='me').execute()
+    return render_to_response('gmail/thread.html', {
+        'threads': messages,
+    })
+
+
+@login_required
+def messages(request):
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    credential = storage.get()
+    http = httplib2.Http()
+    http = credential.authorize(http)
+    gmail_service = build("gmail", "v1", http=http)
     messages = gmail_service.users().messages().list(userId='me').execute()
-    messages_body = []
+    return render_to_response('gmail/thread.html', {
+        'threads': messages,
+    })
+
+
+@login_required
+def messages_dump(request):
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    credential = storage.get()
+    http = httplib2.Http()
+    http = credential.authorize(http)
+    gmail_service = build("gmail", "v1", http=http)
+    messages = gmail_service.users().messages().list(userId='me').execute()
     messageId = messages['messages'][0]['id']
     get_message = gmail_service.users().messages().get(
         userId='me', id=messageId).execute()
     return render_to_response('gmail/thread.html', {
         'threads': get_message,
+    })
+
+
+@login_required
+def labels(request):
+    storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+    credential = storage.get()
+    http = httplib2.Http()
+    http = credential.authorize(http)
+    gmail_service = build("gmail", "v1", http=http)
+    messages = gmail_service.users().labels().list(userId='me').execute()
+    return render_to_response('gmail/thread.html', {
+        'threads': messages,
     })
 
 
@@ -80,15 +115,10 @@ def oauth_callback(request):
         user.save()
         storage = Storage(CredentialsModel, 'id', user, 'credential')
         storage.put(credential)
-        return render_to_response('gmail/thread.html', {
-                                  'threads': user,
-                                  })
     user.backend = 'django.contrib.auth.backends.ModelBackend'
     if user is not None:
         login(request, user)
-        return render_to_response('gmail/thread.html', {
-                                  'threads': user,
-                                  })
+        return redirect('/')
 
     else:
         # Return an 'invalid login' error message.
