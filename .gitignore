@@ -53,10 +53,8 @@ settings.py
 # Sphinx documentation
 docs/_build/
 
-=======
 
 # Sphinx documentation
 docs/_build/
 */db.sqlite3
 */client_secrets.json
->>>>>>> e5e01d7cd31dc7df33f000e12cc86476bc405e7b
